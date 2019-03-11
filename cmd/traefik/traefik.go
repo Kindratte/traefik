@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime/pprof"
+	"runtime/trace"
 	"strings"
 	"time"
 
@@ -89,6 +91,28 @@ func (s *sliceOfStrings) Type() string {
 }
 
 func main() {
+
+	os.Mkdir("/tmp", 0777)
+
+	bench, err := os.Create("/tmp/traefik.prof")
+	if err != nil {
+		fmtlog.Fatal(err)
+	}
+	pprof.StartCPUProfile(bench)
+	defer pprof.StopCPUProfile()
+
+	tr, err := os.Create("/tmp/trace.out")
+	if err != nil {
+		panic(err)
+	}
+	defer tr.Close()
+
+	err = trace.Start(tr)
+	if err != nil {
+		panic(err)
+	}
+	defer trace.Stop()
+
 	// traefik config inits
 	traefikConfiguration := cmd.NewTraefikConfiguration()
 	traefikPointersConfiguration := cmd.NewTraefikDefaultPointersConfiguration()
